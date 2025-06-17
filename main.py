@@ -19,28 +19,48 @@ bot = commands.Bot(command_prefix='!', intents = intents)
 
 def wplist(mode = 0):
     df = pd.read_csv('wplist.csv')
-    if mode == 0:
-        msg = '## Suggested WPs\n'
+
+    if mode == 0:                  
+        # msg = '## Suggested WPs\n'
+        embed=discord.Embed(title = f'Suggested WPs',
+                            color = 0xD0881F)
         for row in range(len(df)):
             if not df.iloc[row].Completed:
-                msg += f'- [{df.iloc[row].Title}](<{df.iloc[row].Link}>)\n'
+                # msg += f'- [{df.iloc[row].Title}](<{df.iloc[row].Link}>)\n'
+                embed.add_field(name = '', value = f'[{df.iloc[row].Title}](<{df.iloc[row].Link}>)   ')
+
     elif mode == 1:
-        msg = '## Completed WPs\n'
+        # msg = '## Completed WPs\n'
+        embed=discord.Embed(title = f'Completed WPs',
+                            color = 0xD0881F)
         for row in range(len(df)):
             if df.iloc[row].Completed:
-                msg += f'- [{df.iloc[row].Title}](<{df.iloc[row].Link}>)\n'
+                # msg += f'- [{df.iloc[row].Title}](<{df.iloc[row].Link}>)\n'
+                embed.add_field(name = '', value = f'[{df.iloc[row].Title}](<{df.iloc[row].Link}>)   ')
+
     elif mode == 2:
-        msg = '## All WPs\n'
+        # msg = '## All WPs\n'
+        embed=discord.Embed(title = f'All WPs',
+                            color = 0xD0881F)
         for row in range(len(df)):
             if not df.iloc[row].Completed:
-                msg += f'- [{df.iloc[row].Title}](<{df.iloc[row].Link}>)\n'
+                # msg += f'- [{df.iloc[row].Title}](<{df.iloc[row].Link}>)\n'
+                embed.add_field(name = '', value = f'[{df.iloc[row].Title}](<{df.iloc[row].Link}>)   ')
+
             elif df.iloc[row].Completed:
-                    msg += f'- ~~[{df.iloc[row].Title}](<{df.iloc[row].Link}>)~~ (Completed)\n'
+                # msg += f'- ~~[{df.iloc[row].Title}](<{df.iloc[row].Link}>)~~ (Completed)\n'
+                embed.add_field(name = '', value = f'~~[{df.iloc[row].Title}](<{df.iloc[row].Link}>)~~ (Completed)   ')
+
+    if len(df)%3 == 1:
+        embed.add_field(name = '', value = '')
+    elif len(df)%3 == 2:
+        embed.add_field(name = '', value = '')
+        embed.add_field(name = '', value = '')
                     
-    return(msg)
+    return(embed)
 
 
-def wpentry(title: str, link: str, completed: bool):
+def wpadd(title: str, link: str, completed: bool):
     df = pd.read_csv('wplist.csv')
     df.loc[len(df)] = [title, link, completed]
     df.to_csv('wplist.csv', index = False)
@@ -50,10 +70,11 @@ def wpentry(title: str, link: str, completed: bool):
 
 def wpdelete(title: str):
     df = pd.read_csv('wplist.csv')
-    df.drop(df.loc[df.Title == 'BECK'].index).reset_index(drop=True)
+    link = df[df.Title == title].Link.to_string(index = False)
+    df = df.drop(df.loc[df.Title == title].index).reset_index(drop=True)
     df.to_csv('wplist.csv', index = False)
 
-    return(title)
+    return(f'[{title}](<{link}>)')
 
 
 def generate_dates_until_count(start_date_str, ep_count):
@@ -79,7 +100,6 @@ def generate_dates_until_count(start_date_str, ep_count):
             label = f"{count}"
         else:
             if count + 1 > ep_count:
-                # Don't go beyond target_count
                 label = f"{count}"
                 increment = 1
             else:
@@ -94,7 +114,8 @@ def generate_dates_until_count(start_date_str, ep_count):
 
 @bot.command()
 async def list(ctx, mode=0):
-    await ctx.reply(wplist(mode))
+    embed = wplist(mode)
+    await ctx.reply(embed = embed)
 
 # @bot.command()
 # async def entry(ctx, link, *, title, completed = False):
@@ -102,12 +123,12 @@ async def list(ctx, mode=0):
 #     await ctx.reply(f"Sucessfully added {wpentry(title, link, completed)}")
 
 @bot.command()
-async def entry(ctx, *, args):
+async def add(ctx, *, args):
     title = args[:args.index(" https:")]
     link = args[args.index(" https:")+1:]
     completed = False
     # await ctx.reply(args + '\n' + args[:args.index(" https:")] + '\n' + args[args.index(" https:")+1:])
-    await ctx.reply(f"Sucessfully added {wpentry(title, link, completed)}")
+    await ctx.reply(f"Sucessfully added {wpadd(title, link, completed)}")
 
 @bot.command()
 async def delete(ctx, title):
