@@ -117,51 +117,55 @@ df = pd.read_csv('wplist.csv')
 #     print(d)
 
 
-from datetime import datetime, timedelta
+# from datetime import datetime, timedelta
 
-def generate_dates_until_count(start_date_str, target_count):
-    current_year = datetime.now().year
-    start_date = datetime.strptime(f"{current_year}-{start_date_str}", "%Y-%m-%d")
+# def generate_dates_until_count(start_date_str, target_count):
+#     current_year = datetime.now().year
+#     start_date = datetime.strptime(f"{current_year}-{start_date_str}", "%Y-%m-%d")
 
-    result = []
-    count = 1
-    i = 0
+#     result = []
+#     count = 1
+#     i = 0
 
-    while count <= target_count:
-        day = start_date + timedelta(days=i)
-        day_name = day.strftime('%a')
-        date_str = day.strftime('%m-%d')
+#     while count <= target_count:
+#         day = start_date + timedelta(days=i)
+#         day_name = day.strftime('%a')
+#         date_str = day.strftime('%m-%d')
 
-        # Weekend logic: Fri, Sat, Sun = +2
-        if day_name in ['Fri', 'Sat', 'Sun']:
-            increment = 2
-        else:
-            increment = 1
+#         # Weekend logic: Fri, Sat, Sun = +2
+#         if day_name in ['Fri', 'Sat', 'Sun']:
+#             increment = 2
+#         else:
+#             increment = 1
 
-        if increment == 1:
-            label = f"{count}"
-        else:
-            if count + 1 > target_count:
-                # Don't go beyond target_count
-                label = f"{count}"
-                increment = 1
-            else:
-                label = f"{count}-{count + 1}"
+#         if increment == 1:
+#             label = f"{count}"
+#         else:
+#             if count + 1 > target_count:
+#                 # Don't go beyond target_count
+#                 label = f"{count}"
+#                 increment = 1
+#             else:
+#                 label = f"{count}-{count + 1}"
 
-        result.append(f"{day_name}, {date_str}: {label}")
-        count += increment
-        i += 1
+#         result.append(f"{day_name}, {date_str}: {label}")
+#         count += increment
+#         i += 1
 
-    return result
+#     return result
 
 
 
-dates = generate_dates_until_count('06-13', 18)
-msg = "'''\n"
-for d in dates:
-    if d[:3] == 'Sun':
-        msg += f'{d}\n------------------\n'
-    else:
-        msg += f'{d}\n'
-msg += "'''"
-print(msg)
+# dates = generate_dates_until_count('06-13', 18)
+# msg = "'''\n"
+# for d in dates:
+#     if d[:3] == 'Sun':
+#         msg += f'{d}\n------------------\n'
+#     else:
+#         msg += f'{d}\n'
+# msg += "'''"
+# print(msg)
+
+
+print(df[df.Title == 'Grand Blue'].Title.to_string(index = False))
+# df.loc[df.Title == 'Grand Blue']['Link']
