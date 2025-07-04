@@ -17,55 +17,11 @@ intents = discord.Intents.all()
 bot = commands.Bot(command_prefix='!', intents = intents)
 
 
-# def wplist(mode = 0):
-#     df = pd.read_csv('wplist.csv')
-
-#     if mode == 0:                  
-#         # msg = '## Suggested WPs\n'
-#         embed=discord.Embed(title = f'Suggested WPs',
-#                             color = 0xD0881F)
-#         for row in range(len(df)):
-#             if not df.iloc[row].Completed:
-#                 # msg += f'- [{df.iloc[row].Title}](<{df.iloc[row].Link}>)\n'
-#                 embed.add_field(name = '', value = f'[{df.iloc[row].Title}](<{df.iloc[row].Link}>)   ')
-
-#     elif mode == 1:
-#         # msg = '## Completed WPs\n'
-#         embed=discord.Embed(title = f'Completed WPs',
-#                             color = 0xD0881F)
-#         for row in range(len(df)):
-#             if df.iloc[row].Completed:
-#                 # msg += f'- [{df.iloc[row].Title}](<{df.iloc[row].Link}>)\n'
-#                 embed.add_field(name = '', value = f'[{df.iloc[row].Title}](<{df.iloc[row].Link}>)   ')
-
-#     elif mode == 2:
-#         # msg = '## All WPs\n'
-#         embed=discord.Embed(title = f'All WPs',
-#                             color = 0xD0881F)
-#         for row in range(len(df)):
-#             if not df.iloc[row].Completed:
-#                 # msg += f'- [{df.iloc[row].Title}](<{df.iloc[row].Link}>)\n'
-#                 embed.add_field(name = '', value = f'[{df.iloc[row].Title}](<{df.iloc[row].Link}>)   ')
-
-#             elif df.iloc[row].Completed:
-#                 # msg += f'- ~~[{df.iloc[row].Title}](<{df.iloc[row].Link}>)~~ (Completed)\n'
-#                 embed.add_field(name = '', value = f'~~[{df.iloc[row].Title}](<{df.iloc[row].Link}>)~~ (Completed)   ')
-
-#     if len(df)%3 == 1:
-#         embed.add_field(name = '', value = '')
-#     elif len(df)%3 == 2:
-#         embed.add_field(name = '', value = '')
-#         embed.add_field(name = '', value = '')
-                    
-#     return(embed)
-
-
 def wplist(mode = 0):
     df = pd.read_csv('wplist.csv')
 
     if mode == 0:
         embed = discord.Embed(title='Suggested', color=0x3d85c6)
-
         msg = ''
         count = 0
         field_num = 1
@@ -84,19 +40,8 @@ def wplist(mode = 0):
         if msg:
             embed.add_field(name=f'', value=msg, inline=True)
 
-    
-        # embed=discord.Embed(title = 'Suggested', color = 0x3d85c6)
-        # msg = ''
-        # for row in range(len(df)):
-        #     if not df.iloc[row].Completed:
-        #         msg += f'- [{df.iloc[row].Title}](<{df.iloc[row].Link}>)\n'
-        
-        # embed.add_field(name='Test', value=msg)
-        #         # embed.add_field(name = '', value = f'[{df.iloc[row].Title}](<{df.iloc[row].Link}>)')
-
     elif mode == 1:
-        embed = discord.Embed(title='Suggested', color=0x38761d)
-
+        embed = discord.Embed(title='Completed', color=0x38761d)
         msg = ''
         count = 0
         field_num = 1
@@ -114,12 +59,6 @@ def wplist(mode = 0):
         # Add any leftover entries that didn't complete a full 10
         if msg:
             embed.add_field(name=f'', value=msg, inline=True)
-
-        # embed=discord.Embed(title = 'Completed', color = 0x38761d)
-        # for row in range(len(df)):
-        #     if df.iloc[row].Completed:
-        #         # msg += f'- [{df.iloc[row].Title}](<{df.iloc[row].Link}>)\n'
-        #         embed.add_field(name = '', value = f'[{df.iloc[row].Title}](<{df.iloc[row].Link}>)')
     
     return(embed)
 
