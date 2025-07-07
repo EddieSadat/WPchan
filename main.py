@@ -7,7 +7,8 @@ import pandas as pd
 import openai
 from dotenv import load_dotenv
 import os
-
+import asyncio
+import random
 
 load_dotenv()
 openai.api_key = os.getenv("OPENAI_KEY")
@@ -21,7 +22,7 @@ def wplist(mode = 0):
     df = pd.read_csv('wplist.csv')
 
     if mode == 0:
-        embed = discord.Embed(title='Suggested', color=0x3d85c6)
+        embed = discord.Embed(title='Suggested', color=0x674ea7)
         msg = ''
         count = 0
         field_num = 1
@@ -42,6 +43,7 @@ def wplist(mode = 0):
 
     elif mode == 1:
         embed = discord.Embed(title='Completed', color=0x38761d)
+
         msg = ''
         count = 0
         field_num = 1
@@ -124,7 +126,6 @@ def generate_dates_until_count(start_date_str, ep_count):
     return dates
 
 
-
 class Menu(discord.ui.View):
     def __init__(self):
         super().__init__()
@@ -137,54 +138,46 @@ class Menu(discord.ui.View):
 
     @discord.ui.button(label='Suggested', style=discord.ButtonStyle.blurple)
     async def add(self, interaction: discord.Interaction, button: discord.ui.Button):
-        # embed = discord.Embed(color=discord.Color.random())
-        # embed.set_author(name='This is an edited embed')
-        # embed.add_field(name='YO', value='FUN')
         await interaction.response.edit_message(embed=wplist(0))
 
     @discord.ui.button(label='Completed', style=discord.ButtonStyle.green)
     async def delete(self, interaction: discord.Interaction, button: discord.ui.Button):
-        # embed = discord.Embed(color=discord.Color.random())
-        # embed.set_author(name='This is an edited embed')
-        # embed.add_field(name='YO', value='FUN')
         await interaction.response.edit_message(embed=wplist(1))
 
 
-
-@bot.command()
+# async def some_command(ctx, arg1: str = commands.parameter(default="Here be default", description="Here be description"))
+@bot.command(description='Interactive menu to view suggested and completed WPs.')
 async def menu(ctx):
     view = Menu()
 
     # embed = discord.Embed(title='WP Menu', color=discord.Color.dark_purple)
     embed = wplist()
-
-
     await ctx.reply(embed=embed, view=view)
 
 
-@bot.command()
-async def list(ctx, mode=0):
+@bot.command(description='Shows you list of saved anime.')
+async def list(ctx, mode=commands.parameter(description="0 = Suggested, 1 = Completed", default=0)):
     embed = wplist(mode)
     await ctx.reply(embed = embed)
 
-@bot.command()
-async def add(ctx, *, args):
+@bot.command(description='Add an anime to WP list.')
+async def add(ctx, *, args = commands.parameter(description="!add Title Link")):
     title = args[:args.index(" https:")]
     link = args[args.index(" https:")+1:]
     completed = False
     # await ctx.reply(args + '\n' + args[:args.index(" https:")] + '\n' + args[args.index(" https:")+1:])
     await ctx.reply(f"Sucessfully added {wpadd(title, link, completed)}")
 
-@bot.command()
-async def delete(ctx, title):
+@bot.command(description='Delete an anime from WP list. Deletes from both Suggested and Completed lists.')
+async def delete(ctx, title=commands.parameter(description="Enter title exactly as it appears on the list.")):
     await ctx.reply(f'Successfully deleted {wpdelete(title)}')
 
-@bot.command()
-async def complete(ctx, title):
+@bot.command(description='Mark an anime as Completed.')
+async def complete(ctx, title=commands.parameter(description="Enter title exactly as it appears on the list.")):
     await ctx.reply(f'Congrats on completing {wpcomplete(title)}!')
 
-@bot.command()
-async def schedule(ctx, start_date, episodes: int, *, title):
+@bot.command(description='Creates an episode schedule for an anime.')
+async def schedule(ctx, start_date=commands.parameter(description="Start date: MM-DD"), episodes: int = commands.parameter(description="Number of episodes"), *, title= commands.parameter(description="Title of schedule")):
     dates = generate_dates_until_count(start_date, episodes)
     msg = ""
     for d in dates:
@@ -195,6 +188,58 @@ async def schedule(ctx, start_date, episodes: int, *, title):
 
     await ctx.reply(f"### {title}\n```\n{msg}```")
 
+@bot.command(description='RNG an anime to WP from your suggestions list.')
+async def roll(ctx):
+    df = pd.read_csv('wplist.csv')
+
+    # embed = discord.Embed(title='Rolllllllingggggg', color=discord.Color.random())
+    # embed.set_author(name='Author of this message')
+    # # embed.set_image(url='https://anilist.co/anime/99698/Kings-Game/')
+    # embed.add_field(name='ANIME', value='https://anilist.co/anime/99698/Kings-Game/')
+    # # embed.set_image('https://anilist.co/anime/99698/Kings-Game/')
+    # colors = ['🔴','🔵','🟣','🟢','🟡','🟠']
+
+    # reply_msg = await ctx.reply(content='There is no such thing as coincidence in this world...')
+    # # await asyncio.sleep(1)
+    # await reply_msg.edit(content=f'{random.choice(colors)} {random.choice(colors)} {random.choice(colors)} Preparing to roll {random.choice(colors)} {random.choice(colors)} {random.choice(colors)}')
+    # # await asyncio.sleep(1)
+    # await reply_msg.edit(content=f'{random.choice(colors)} {random.choice(colors)} {random.choice(colors)} Preparing to roll {random.choice(colors)} {random.choice(colors)} {random.choice(colors)}')
+    # # await asyncio.sleep(1)
+    # await reply_msg.edit(content=f'{random.choice(colors)} {random.choice(colors)} {random.choice(colors)} Preparing to roll {random.choice(colors)} {random.choice(colors)} {random.choice(colors)}')
+    # await asyncio.sleep(1)
+
+    title_msg = await ctx.reply(content='## There is no such thing as ***coincidence*** in this world...')
+    await asyncio.sleep(2)
+    await title_msg.edit(content='## There is no such thing as ***coincidence*** in this world...\n## ... there is only ***hitsuzen***.')
+    await asyncio.sleep(2)
+    reply_msg = await ctx.channel.send(content=f'🔻🔺🔻🔺**{df.sample(1).Title.to_string(index = False)}**🔻🔺🔻🔺')
+    await asyncio.sleep(.7)
+    await reply_msg.edit(content=f'🔺🔻🔺🔻**{df.sample(1).Title.to_string(index = False)}**🔺🔻🔺🔻')
+    await asyncio.sleep(.7)
+    await reply_msg.edit(content=f'🔻🔺🔻🔺**{df.sample(1).Title.to_string(index = False)}**🔻🔺🔻🔺')
+    await asyncio.sleep(.7)
+    await reply_msg.edit(content=f'🔺🔻🔺🔻**{df.sample(1).Title.to_string(index = False)}**🔺🔻🔺🔻')
+    await asyncio.sleep(.7)
+    await reply_msg.edit(content=f'🔻🔺🔻🔺**{df.sample(1).Title.to_string(index = False)}**🔻🔺🔻🔺')
+    await asyncio.sleep(.7)
+    await reply_msg.edit(content=f'🔺🔻🔺🔻**{df.sample(1).Title.to_string(index = False)}**🔺🔻🔺🔻')
+    await asyncio.sleep(.7)
+    await reply_msg.edit(content=f'🔻🔺🔻🔺**{df.sample(1).Title.to_string(index = False)}**🔻🔺🔻🔺')
+    await asyncio.sleep(.7)
+    await reply_msg.edit(content=f'🔺🔻🔺🔻**{df.sample(1).Title.to_string(index = False)}**🔺🔻🔺🔻')
+    await asyncio.sleep(.7)
+    await reply_msg.edit(content=f'🔻🔺🔻🔺**{df.sample(1).Title.to_string(index = False)}**🔻🔺🔻🔺')
+    # await reply_msg.edit(content=f'### {df.sample(1).Title.to_string(index = False)}')
+    # await asyncio.sleep(.7)
+    # await reply_msg.edit(content=f'### {df.sample(1).Title.to_string(index = False)}')
+    # await asyncio.sleep(.7)
+    # await reply_msg.edit(content=f'### {df.sample(1).Title.to_string(index = False)}')
+    # await asyncio.sleep(.7)
+    # await reply_msg.edit(content=f'### {df.sample(1).Title.to_string(index = False)}')
+    await asyncio.sleep(.7)
+    winner = df.sample(1)
+    await reply_msg.edit(content=f'## 🏆 ||{winner.Title.to_string(index = False)}|| 🏆\n||{winner.Link.to_string(index = False)}||')
+    # await ctx.channel.send(content=f'||{winner.Link.to_string(index = False)}||')
 
 # ==== Channel Preference on_guild_join ===============
 @bot.event
