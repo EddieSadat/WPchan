@@ -12,6 +12,6 @@ WatchParty-chan:
 
 Features to be added:
 -creates threads for each party,
--RNG select an anime from the list for the next watch party (ideally provide some animation/loading visual),
+-~~RNG select an anime from the list for the next watch party (ideally provide some animation/loading visual)~~ Complete,
 ...
 
