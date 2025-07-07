@@ -1,12 +1,12 @@
 import discord
 from discord.ext import commands
 from discord.utils import find
-# from datetime import datetime, timezone
 from datetime import datetime, timedelta
 import pandas as pd
 import openai
 from dotenv import load_dotenv
 import os
+import asyncio
 
 
 load_dotenv()
@@ -20,43 +20,47 @@ bot = commands.Bot(command_prefix='!', intents = intents)
 def wplist(mode = 0):
     df = pd.read_csv('wplist.csv')
 
-    if mode == 0:                  
-        # msg = '## Suggested WPs\n'
-        embed=discord.Embed(title = f'Suggested WPs',
-                            color = 0xD0881F)
-        for row in range(len(df)):
-            if not df.iloc[row].Completed:
-                # msg += f'- [{df.iloc[row].Title}](<{df.iloc[row].Link}>)\n'
-                embed.add_field(name = '', value = f'[{df.iloc[row].Title}](<{df.iloc[row].Link}>)   ')
+    if mode == 0:
+        embed = discord.Embed(title='Suggested', color=0x674ea7)
+        msg = ''
+        count = 0
+        field_num = 1
+
+        for _, row in df.iterrows():
+            if not row.Completed:
+                msg += f'- [{row.Title}](<{row.Link}>)\n'
+                count += 1
+
+                if count % 10 == 0:
+                    embed.add_field(name=f'', value=msg, inline=True)
+                    msg = ''
+                    field_num += 1
+
+        # Add any leftover entries that didn't complete a full 10
+        if msg:
+            embed.add_field(name=f'', value=msg, inline=True)
 
     elif mode == 1:
-        # msg = '## Completed WPs\n'
-        embed=discord.Embed(title = f'Completed WPs',
-                            color = 0xD0881F)
-        for row in range(len(df)):
-            if df.iloc[row].Completed:
-                # msg += f'- [{df.iloc[row].Title}](<{df.iloc[row].Link}>)\n'
-                embed.add_field(name = '', value = f'[{df.iloc[row].Title}](<{df.iloc[row].Link}>)   ')
+        embed = discord.Embed(title='Completed', color=0x38761d)
 
-    elif mode == 2:
-        # msg = '## All WPs\n'
-        embed=discord.Embed(title = f'All WPs',
-                            color = 0xD0881F)
-        for row in range(len(df)):
-            if not df.iloc[row].Completed:
-                # msg += f'- [{df.iloc[row].Title}](<{df.iloc[row].Link}>)\n'
-                embed.add_field(name = '', value = f'[{df.iloc[row].Title}](<{df.iloc[row].Link}>)   ')
+        msg = ''
+        count = 0
+        field_num = 1
 
-            elif df.iloc[row].Completed:
-                # msg += f'- ~~[{df.iloc[row].Title}](<{df.iloc[row].Link}>)~~ (Completed)\n'
-                embed.add_field(name = '', value = f'~~[{df.iloc[row].Title}](<{df.iloc[row].Link}>)~~ (Completed)   ')
+        for _, row in df.iterrows():
+            if row.Completed:
+                msg += f'- [{row.Title}](<{row.Link}>)\n'
+                count += 1
 
-    if len(df)%3 == 1:
-        embed.add_field(name = '', value = '')
-    elif len(df)%3 == 2:
-        embed.add_field(name = '', value = '')
-        embed.add_field(name = '', value = '')
-                    
+                if count % 10 == 0:
+                    embed.add_field(name=f'', value=msg, inline=True)
+                    msg = ''
+                    field_num += 1
+
+        # Add any leftover entries that didn't complete a full 10
+        if msg:
+            embed.add_field(name=f'', value=msg, inline=True)
+    
     return(embed)
 
 
@@ -72,6 +76,15 @@ def wpdelete(title: str):
     df = pd.read_csv('wplist.csv')
     link = df[df.Title == title].Link.to_string(index = False)
     df = df.drop(df.loc[df.Title == title].index).reset_index(drop=True)
+    df.to_csv('wplist.csv', index = False)
+
+    return(f'[{title}](<{link}>)')
+
+
+def wpcomplete(title: str):
+    df = pd.read_csv('wplist.csv')
+    link = df[df.Title == title].Link.to_string(index = False)
+    df.loc[df.loc[df.Title == title].index, ['Completed']] = True
     df.to_csv('wplist.csv', index = False)
 
     return(f'[{title}](<{link}>)')
@@ -112,38 +125,53 @@ def generate_dates_until_count(start_date_str, ep_count):
     return dates
 
 
-@bot.command()
-async def list(ctx, mode=0):
+class Menu(discord.ui.View):
+    def __init__(self):
+        super().__init__()
+        self.value = None
+
+    @discord.ui.button(label='Suggested', style=discord.ButtonStyle.blurple)
+    async def add(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.edit_message(embed=wplist(0))
+
+    @discord.ui.button(label='Completed', style=discord.ButtonStyle.green)
+    async def delete(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.edit_message(embed=wplist(1))
+
+
+@bot.command(description='Interactive menu to view suggested and completed WPs.')
+async def menu(ctx):
+    view = Menu()
+    embed = wplist()
+    await ctx.reply(embed=embed, view=view)
+
+
+@bot.command(description='Shows you list of saved anime.')
+async def list(ctx, mode=commands.parameter(description="0 = Suggested, 1 = Completed", default=0)):
     embed = wplist(mode)
     await ctx.reply(embed = embed)
 
-# @bot.command()
-# async def entry(ctx, link, *, title, completed = False):
-#     await ctx.reply(f'{title}, {link}, {completed}')
-#     await ctx.reply(f"Sucessfully added {wpentry(title, link, completed)}")
 
-@bot.command()
-async def add(ctx, *, args):
+@bot.command(description='Add an anime to WP list.')
+async def add(ctx, *, args = commands.parameter(description="!add Title Link")):
     title = args[:args.index(" https:")]
     link = args[args.index(" https:")+1:]
     completed = False
-    # await ctx.reply(args + '\n' + args[:args.index(" https:")] + '\n' + args[args.index(" https:")+1:])
     await ctx.reply(f"Sucessfully added {wpadd(title, link, completed)}")
 
-@bot.command()
-async def delete(ctx, title):
+
+@bot.command(description='Delete an anime from WP list. Deletes from both Suggested and Completed lists.')
+async def delete(ctx, title=commands.parameter(description="Enter title exactly as it appears on the list.")):
     await ctx.reply(f'Successfully deleted {wpdelete(title)}')
 
-# @bot.command()
-# async def replace(ctx, ):
-#     await ctx.reply(f'Successfully replaced {wpdelete(title)}')
 
-# @bot.command()
-# async def info(ctx, title):
-#     await ctx.reply(f'Successfully deleted {wpdelete(title)}')
+@bot.command(description='Mark an anime as Completed.')
+async def complete(ctx, title=commands.parameter(description="Enter title exactly as it appears on the list.")):
+    await ctx.reply(f'Congrats on completing {wpcomplete(title)}!')
 
-@bot.command()
-async def schedule(ctx, start_date, episodes: int, *, title):
+
+@bot.command(description='Creates an episode schedule for an anime.')
+async def schedule(ctx, start_date=commands.parameter(description="Start date: MM-DD"), episodes: int = commands.parameter(description="Number of episodes"), *, title= commands.parameter(description="Title of schedule")):
     dates = generate_dates_until_count(start_date, episodes)
     msg = ""
     for d in dates:
@@ -155,6 +183,37 @@ async def schedule(ctx, start_date, episodes: int, *, title):
     await ctx.reply(f"### {title}\n```\n{msg}```")
 
 
+@bot.command(description='RNG an anime to WP from your suggestions list.')
+async def roll(ctx):
+    df = pd.read_csv('wplist.csv')
+
+    title_msg = await ctx.reply(content='## There is no such thing as ***coincidence*** in this world...')
+    await asyncio.sleep(2)
+    await title_msg.edit(content='## There is no such thing as ***coincidence*** in this world...\n## ... there is only ***hitsuzen***.')
+    await asyncio.sleep(2)
+    reply_msg = await ctx.channel.send(content=f'🔻🔺🔻🔺**{df.sample(1).Title.to_string(index = False)}**🔻🔺🔻🔺')
+    await asyncio.sleep(.7)
+    await reply_msg.edit(content=f'🔺🔻🔺🔻**{df.sample(1).Title.to_string(index = False)}**🔺🔻🔺🔻')
+    await asyncio.sleep(.7)
+    await reply_msg.edit(content=f'🔻🔺🔻🔺**{df.sample(1).Title.to_string(index = False)}**🔻🔺🔻🔺')
+    await asyncio.sleep(.7)
+    await reply_msg.edit(content=f'🔺🔻🔺🔻**{df.sample(1).Title.to_string(index = False)}**🔺🔻🔺🔻')
+    await asyncio.sleep(.7)
+    await reply_msg.edit(content=f'🔻🔺🔻🔺**{df.sample(1).Title.to_string(index = False)}**🔻🔺🔻🔺')
+    await asyncio.sleep(.7)
+    await reply_msg.edit(content=f'🔺🔻🔺🔻**{df.sample(1).Title.to_string(index = False)}**🔺🔻🔺🔻')
+    await asyncio.sleep(.7)
+    await reply_msg.edit(content=f'🔻🔺🔻🔺**{df.sample(1).Title.to_string(index = False)}**🔻🔺🔻🔺')
+    await asyncio.sleep(.7)
+    await reply_msg.edit(content=f'🔺🔻🔺🔻**{df.sample(1).Title.to_string(index = False)}**🔺🔻🔺🔻')
+    await asyncio.sleep(.7)
+    await reply_msg.edit(content=f'🔻🔺🔻🔺**{df.sample(1).Title.to_string(index = False)}**🔻🔺🔻🔺')
+    await asyncio.sleep(.7)
+
+    winner = df.sample(1)
+    await reply_msg.edit(content=f'## 🏆 ||{winner.Title.to_string(index = False)}|| 🏆\n||{winner.Link.to_string(index = False)}||')
+
+
 # ==== Channel Preference on_guild_join ===============
 @bot.event
 async def on_guild_join(guild):
@@ -163,7 +222,6 @@ async def on_guild_join(guild):
     embed = discord.Embed(title='WPchan at your service!')
     embed.set_image(url="https://64.media.tumblr.com/tumblr_mb5yq0Rn7u1qdbg24o2_500.gif")
     await target_channel.send(embed=embed)
-    # await target_channel.send("https://64.media.tumblr.com/tumblr_mb5yq0Rn7u1qdbg24o2_500.gif")
 
 
 @bot.event
