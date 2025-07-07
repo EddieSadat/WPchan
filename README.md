@@ -8,10 +8,10 @@ WatchParty-chan:
 -saves and displays user-suggested animes, 
 -keeps track of planned and completed watch parties, 
 -automatically schedules episodes/day using real datetime,
+-RNG a WP from the planned list
 
 
 Features to be added:
 -creates threads for each party,
--RNG select an anime from the list for the next watch party (ideally provide some animation/loading visual),
 ...
 
