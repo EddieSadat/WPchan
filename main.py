@@ -161,12 +161,12 @@ async def add(ctx, *, args = commands.parameter(description="!add Title Link")):
 
 
 @bot.command(description='Delete an anime from WP list. Deletes from both Suggested and Completed lists.')
-async def delete(ctx, title=commands.parameter(description="Enter title exactly as it appears on the list.")):
+async def delete(ctx, *, title=commands.parameter(description="Enter title exactly as it appears on the list.")):
     await ctx.reply(f'Successfully deleted {wpdelete(title)}')
 
 
 @bot.command(description='Mark an anime as Completed.')
-async def complete(ctx, title=commands.parameter(description="Enter title exactly as it appears on the list.")):
+async def complete(ctx, *, title=commands.parameter(description="Enter title exactly as it appears on the list.")):
     await ctx.reply(f'Congrats on completing {wpcomplete(title)}!')
 
 
