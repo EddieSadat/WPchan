@@ -125,6 +125,13 @@ def generate_dates_until_count(start_date_str, ep_count):
     return dates
 
 
+# def create_thread(channel_id=837900874889166858, title):
+#     channel = bot.get_channel(int(channel_id))
+#     thread = await channel.create_thread(
+#         name=title,
+#         type=ChannelType.public_thread)
+    
+
 class Menu(discord.ui.View):
     def __init__(self):
         super().__init__()
@@ -213,6 +220,13 @@ async def roll(ctx):
 
     winner = df_plan.sample(1)
     await reply_msg.edit(content=f'## 🏆 ||{winner.Title.to_string(index = False)}|| 🏆\n||{winner.Link.to_string(index = False)}||')
+
+
+    channel = bot.get_channel(int(837900874889166858))
+    thread = await channel.create_thread(
+        name=winner.Title.to_string(index = False),
+        type=ChannelType.public_thread) # Do you need ChannelType?
+    
 
 
 # ==== Channel Preference on_guild_join ===============
