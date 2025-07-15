@@ -186,6 +186,7 @@ async def schedule(ctx, start_date=commands.parameter(description="Start date: M
 @bot.command(description='RNG an anime to WP from your suggestions list.')
 async def roll(ctx):
     df = pd.read_csv('wplist.csv')
+    df_plan = df[df['Completed'] == False]
 
     title_msg = await ctx.reply(content='## There is no such thing as ***coincidence*** in this world...')
     await asyncio.sleep(2)
